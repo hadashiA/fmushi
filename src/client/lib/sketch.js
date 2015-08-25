@@ -1,10 +1,5 @@
 let colors = [];
 
-function boxColor(box) {
-  const p = box.y / dim;
-  return colors[Math.floor(p * colors.length)];
-}
-
 function hitPixel(p, x, y) {
   const c = p.get(x, y);
   return (p.brightness(c) < 254);
@@ -21,12 +16,14 @@ class Box {
     this.x = p.random(dim);
     this.y = p.random(dim);
     this.d = 0;
+    this.color = colors[Math.floor(this.y / dim * colors.length)];
   }
 
   draw(p) {
     if (this.okToDraw) {
       p.fill(this.color);
       p.rect(this.x, this.y, this.d, this.d);
+      
     }
   }
 }
@@ -35,40 +32,18 @@ export default function sketch(p) {
   window.processing = p;
 
   const image = p.loadImage('/img/mushi_sakura.png', 'png');
-  const dim = 600;
+  const dim = 300;
   const numBoxesMax = 1000;
   const paletteSize = 256;
   
   let boxes = [];
-
-  for (let x = 0; x < image.width; x++) {
-    for (let y = 0; y < image.height; y++) {
-      const color = p.get(x, y);
-
-      let exists = false;
-      for (let c in colors) {
-        if (color == c) {
-          exists = true;
-          break;
-        }
-      }
-
-      if (!exists) {
-        if (colors.length < paletteSize) {
-          colors.push(color);
-        } else {
-          return;
-        }
-      }
-    }
-  }
 
   p.setup = () => {
     p.size(600, 600, p.OPENGL);
     p.rectMode(p.CENTER);
     p.frameRate(30);
     p.background(255);
-    p.noStroke();
+    p.stroke(0);
 
     boxes.push(new Box(p, dim));
     boxes.push(new Box(p, dim));
@@ -77,6 +52,31 @@ export default function sketch(p) {
   
   p.draw = () => {
     p.image(image, 0, 0);
+
+    if (colors.length <= 0) {
+      for (let x = 0; x < image.width; x++) {
+        for (let y = 0; y < image.height; y++) {
+          const color = p.get(x, y);
+
+          let exists = false;
+          for (let c in colors) {
+            if (color == c) {
+              exists = true;
+              break;
+            }
+          }
+
+          if (!exists) {
+            if (colors.length < paletteSize) {
+              colors.push(color);
+            } else {
+              return;
+            }
+          }
+        }
+      }
+    }
+    
     for (let i = 0; i < boxes.length; i++) {
       let box = boxes[i];
       box.d += 2;
@@ -111,6 +111,7 @@ export default function sketch(p) {
         }
       } else {
         box.okToDraw = true;
+        console.log(box);
       }
       
       box.draw(p);
